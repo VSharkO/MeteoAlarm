@@ -2,6 +2,11 @@
 #include <Ethernet.h>
 #include <SPI.h>
 
+
+#define outputBUZ 9
+#define outputLEDHOT 10 // LED output pin
+#define outputLEDCOLD 1 // LED output pin
+
 const int rs = 7, en = 6, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 String temperature="30000";
@@ -16,6 +21,9 @@ void setup() {
   
   Ethernet.begin(mac, ip);
   lcd.begin(16, 2);
+  pinMode(outputBUZ, OUTPUT);
+  pinMode(outputLEDHOT, OUTPUT);
+  pinMode(outputLEDCOLD, OUTPUT);
   Serial.begin(9600);
 }
 
@@ -25,9 +33,18 @@ void loop() {
   Serial.println(clouds);
   
   lcd.print("Temp: " + String(convertKelvin(temperature)) +"C");
+  if(convertKelvin(temperature)>14){
+    beep(6000, outputBUZ);
+    digitalWrite(outputLEDHOT, HIGH);
+    }
+   if(convertKelvin(temperature)<18.0){
+    beep(6000, outputBUZ);
+    digitalWrite(outputLEDCOLD, HIGH);
+    }
   lcd.setCursor(0, 1);
   lcd.print(clouds);
-  delay(600000);
+  delay(6000);
+  lcd.clear();
 }
 
 void callService(){
@@ -37,6 +54,7 @@ void callService(){
     client.println("Host: localhost");
     client.println();
   }
+  
 delay(1000);
    if (client.available()) {
     for(int i=0;i<467;i++){
@@ -66,4 +84,10 @@ delay(1000);
     }
     return rez;
   }
-
+  
+void beep(byte delayms, int pin){
+ analogWrite(pin, 120);
+ delay(delayms);
+ analogWrite(pin, 0);
+ delay(delayms);
+}
